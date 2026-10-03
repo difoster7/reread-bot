@@ -1,0 +1,43 @@
+# Base config. Each read is its own [env.<name>], deployed as the Worker
+# "reread-bot-<name>". The base has no cron, vars or KV, so a deploy
+# without --env is inert.
+name = "reread-bot"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+
+# ---------------------------------------------------------------- mistborn
+[env.mistborn]
+workers_dev = true # needed only for the optional admin route
+
+[env.mistborn.triggers]
+crons = ["0 * * * *"]
+
+[[env.mistborn.kv_namespaces]]
+binding = "STATE"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+[env.mistborn.vars]
+PLAN = "mistborn"
+GUILD_ID = "REPLACE_WITH_GUILD_ID"
+CHANNEL_ID = "REPLACE_WITH_CHANNEL_ID"
+CHANNEL_MODE = "forum"            # "forum" or "text"
+TIMEZONE = "America/Los_Angeles"
+POST_HOUR = "9"                   # local hour, 0-23
+POST_OFFSET_DAYS = "0"            # e.g. "-14" to open at the start of the reading window
+ROLE_ID = ""                      # set to ping a role when a thread opens
+FORUM_TAGS = "{}"                 # e.g. '{"TFE":"123...","WoA":"456..."}'
+LOCK_PREVIOUS = "true"
+REMINDER_DAYS_BEFORE = "3"        # "0" disables reminders
+DRY_RUN = "false"
+TEST_CHANNEL_ID = ""              # admin force-post target
+SPOILER_POLICY = ""
+# Templates default to DEFAULT_TEMPLATES in src/render.ts. Override any of
+# THREAD_TITLE_TEMPLATE, OPENING_TEMPLATE, NEXT_TEMPLATE, FINAL_TEXT,
+# REMINDER_TEMPLATE here, for example:
+# OPENING_TEMPLATE = """
+# **{bookTitle} — {range}**
+# Session {n} of {total} · {date}
+#
+# {spoilerPolicy}
+#
+# {next}"""

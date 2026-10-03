@@ -1,5 +1,6 @@
 import type { Plan } from "../src/plan.ts";
 import type { Env } from "../src/config.ts";
+import type { DiscordApi, ForumPost } from "../src/discord.ts";
 
 /**
  * Three weekly Sunday sessions in January 2027 (PST, UTC-8), so with the
@@ -72,4 +73,41 @@ export function baseEnv(vars: Record<string, unknown> = {}): Env {
 
 export function kvOf(env: Env): MemoryKV {
     return env.STATE as unknown as MemoryKV;
+}
+
+/** Records calls; a method listed in `failures` throws that error (after recording). */
+export class FakeDiscord implements DiscordApi {
+    readonly calls: { method: string; args: unknown[] }[] = [];
+    readonly failures = new Map<string, Error>();
+    private threads = 0;
+    private messages = 0;
+
+    private record(method: string, args: unknown[]): void {
+        this.calls.push({ method, args });
+        const failure = this.failures.get(method);
+        if (failure) throw failure;
+    }
+
+    async createForumPost(channelId: string, post: ForumPost): Promise<string> {
+        this.record("createForumPost", [channelId, post]);
+        return `thread-${++this.threads}`;
+    }
+
+    async createThread(channelId: string, name: string): Promise<string> {
+        this.record("createThread", [channelId, name]);
+        return `thread-${++this.threads}`;
+    }
+
+    async sendMessage(channelId: string, content: string, roleId?: string): Promise<string> {
+        this.record("sendMessage", [channelId, content, roleId]);
+        return `message-${++this.messages}`;
+    }
+
+    async archiveThread(threadId: string, locked: boolean): Promise<void> {
+        this.record("archiveThread", [threadId, locked]);
+    }
+
+    async deleteChannel(channelId: string): Promise<void> {
+        this.record("deleteChannel", [channelId]);
+    }
 }

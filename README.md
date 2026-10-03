@@ -164,6 +164,10 @@ npm run deploy -- --env mistborn
 npx wrangler tail --env mistborn   # live logs
 ```
 
+Logs (including stuck-pending and missed-session messages) are also kept in
+the Cloudflare dashboard under the Worker's **Logs** tab, because
+observability is enabled in `wrangler.toml`.
+
 Tip: deploy first with `DRY_RUN = "true"` and watch `wrangler tail` around
 the post hour, then switch to `"false"` and redeploy.
 
@@ -191,11 +195,11 @@ sessions before ones already posted renumbers them, so avoid that.
 
 ## 11. Adding a deployment
 
-Add `[env.<name>]`, `[env.<name>.triggers]`, `[[env.<name>.kv_namespaces]]`
-and `[env.<name>.vars]` blocks (vars are not inherited), create a KV
-namespace, set secrets with `--env <name>`, and deploy with
-`npm run deploy -- --env <name>`. Each deployment uses one Cron Trigger
-(free plan: 5 per account, shared with other Workers).
+Add `[env.<name>]`, `[env.<name>.triggers]`, `[env.<name>.observability]`,
+`[[env.<name>.kv_namespaces]]` and `[env.<name>.vars]` blocks (vars are not
+inherited), create a KV namespace, set secrets with `--env <name>`, and
+deploy with `npm run deploy -- --env <name>`. Each deployment uses one Cron
+Trigger (free plan: 5 per account, shared with other Workers).
 
 ## 12. Recovering a stuck session
 
@@ -213,6 +217,10 @@ The bot will not retry it (a missed post beats a duplicate). To fix:
   npx wrangler kv key put --env mistborn --binding STATE --remote "latest" \
     '{"n":N,"threadId":"THREAD_ID"}'
   ```
+
+  Only overwrite `latest` if N is newer than the session currently recorded
+  in `latest`. The previous session's thread was not locked automatically; lock it in
+  Discord if `LOCK_PREVIOUS` is on.
 
 - **No thread exists:** delete the marker; the next hourly run posts it:
 

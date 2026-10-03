@@ -22,7 +22,17 @@ export interface LatestRecord {
     threadId: string;
 }
 
-type Step = (cfg: Config, kv: KVNamespace, discord: DiscordApi, now: LocalNow) => Promise<void>;
+type Sleep = (ms: number) => Promise<void>;
+
+type Step = (
+    cfg: Config,
+    kv: KVNamespace,
+    discord: DiscordApi,
+    now: LocalNow,
+    sleep: Sleep,
+) => Promise<void>;
+
+const KV_SAME_KEY_GAP_MS = 1100; // KV allows one write per key per second
 
 /** One hourly run: open the due session's thread, then post any due reminder. */
 export async function runScheduled(
@@ -30,6 +40,7 @@ export async function runScheduled(
     kv: KVNamespace,
     discord: DiscordApi,
     instant: number,
+    sleep: Sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
 ): Promise<void> {
     const now = localNow(instant, cfg.timezone);
     const steps: [string, Step][] = [
@@ -39,7 +50,7 @@ export async function runScheduled(
     const failures: unknown[] = [];
     for (const [name, step] of steps) {
         try {
-            await step(cfg, kv, discord, now);
+            await step(cfg, kv, discord, now, sleep);
         } catch (err) {
             logError(`${name} step failed`, err);
             failures.push(err);
@@ -77,6 +88,7 @@ async function threadStep(
     kv: KVNamespace,
     discord: DiscordApi,
     now: LocalNow,
+    sleep: Sleep,
 ): Promise<void> {
     const target = pickThreadSession(cfg.sessions, now, cfg);
     if (!target) return;
@@ -106,7 +118,7 @@ async function threadStep(
         return;
     }
 
-    const threadId = await postSession(cfg, kv, discord, target, post);
+    const threadId = await postSession(cfg, kv, discord, target, post, sleep);
     await kv.put("latest", JSON.stringify({ n: target.n, threadId } satisfies LatestRecord));
     console.log(
         `Opened session ${target.n}: https://discord.com/channels/${cfg.guildId}/${threadId}`,
@@ -131,11 +143,13 @@ async function postSession(
     discord: DiscordApi,
     session: Session,
     post: RenderedPost,
+    sleep: Sleep,
 ): Promise<string> {
     const key = `session:${session.n}`;
     const startedAt = new Date().toISOString();
     const save = (record: SessionRecord) => kv.put(key, JSON.stringify(record));
     await save({ status: "pending", startedAt });
+    await sleep(KV_SAME_KEY_GAP_MS);
 
     const tag = cfg.forumTags[session.book.short];
     let threadId: string;

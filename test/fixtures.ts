@@ -39,9 +39,26 @@ export const IDS = {
 
 export const PLANS: Record<string, Plan> = { tiny: TINY_PLAN };
 
-/** In-memory stand-in for the subset of KVNamespace the bot uses. */
+/**
+ * In-memory stand-in for the subset of KVNamespace the bot uses. Models KV's
+ * limit of one write per key per second: call `tick()` to let a second pass.
+ */
 export class MemoryKV {
     readonly data = new Map<string, string>();
+    private now = 0;
+    private lastWrite = new Map<string, number>();
+
+    /** Models one second passing. */
+    tick(): void {
+        this.now++;
+    }
+
+    private checkWrite(key: string): void {
+        if (this.lastWrite.get(key) === this.now) {
+            throw new Error(`KV write to "${key}" within one second of the previous write`);
+        }
+        this.lastWrite.set(key, this.now);
+    }
 
     async get(key: string, type?: "json"): Promise<unknown> {
         const value = this.data.get(key);
@@ -50,10 +67,12 @@ export class MemoryKV {
     }
 
     async put(key: string, value: string): Promise<void> {
+        this.checkWrite(key);
         this.data.set(key, value);
     }
 
     async delete(key: string): Promise<void> {
+        this.checkWrite(key);
         this.data.delete(key);
     }
 }

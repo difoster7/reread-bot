@@ -15,8 +15,17 @@ function setup(vars: Record<string, unknown> = {}) {
     const env = baseEnv(vars);
     const cfg = parseConfig(env, PLANS);
     const discord = new FakeDiscord();
-    const run = (instant: number) => runScheduled(cfg, env.STATE, discord, instant);
-    return { discord, kv: kvOf(env), run };
+    const kv = kvOf(env);
+    const sleeps: number[] = [];
+    const sleep = async (ms: number) => {
+        sleeps.push(ms);
+        kv.tick();
+    };
+    const run = (instant: number) => {
+        kv.tick();
+        return runScheduled(cfg, env.STATE, discord, instant, sleep);
+    };
+    return { discord, kv, run, sleeps };
 }
 
 const methods = (d: FakeDiscord) => d.calls.map((c) => c.method);
@@ -139,6 +148,22 @@ describe("thread step", () => {
         expect(methods(discord)).toEqual(["createForumPost"]);
     });
 
+    it("waits a second between same-key KV writes", async () => {
+        const { kv, run, sleeps } = setup();
+        await run(DAY1);
+        expect(sleeps).toEqual([1100]);
+        expect(record(kv, "session:1")).toMatchObject({ status: "posted" });
+    });
+
+    it("does not let a failed lock stop the run", async () => {
+        const { discord, kv, run } = setup();
+        discord.failures.set("archiveThread", new DiscordHttpError("PATCH", "/x", 403, {}));
+        await run(DAY1);
+        await expect(run(DAY2)).resolves.toBeUndefined();
+        expect(record(kv, "session:2")).toMatchObject({ status: "posted" });
+        expect(console.error).toHaveBeenCalled();
+    });
+
     it("dry run reads state but never calls Discord or writes KV", async () => {
         const { discord, kv, run } = setup({ DRY_RUN: "true", DISCORD_BOT_TOKEN: "" });
         await run(DAY1);
@@ -194,6 +219,20 @@ describe("reminder step", () => {
             },
         ]);
         expect(record(kv, "reminder:2")).toMatchObject({ messageId: "message-1" });
+    });
+
+    it("still sends the reminder when the thread step fails, then rethrows", async () => {
+        const { discord, kv, run } = setup();
+        kv.data.set("latest", '{"n":1,"threadId":"thread-1"}');
+        kv.data.set("session:1", '{"status":"pending","startedAt":"2027-01-03T17:00:00Z"}');
+        await expect(run(REMIND2)).rejects.toThrow(/stuck pending/);
+        expect(discord.calls).toEqual([
+            {
+                method: "sendMessage",
+                args: ["thread-1", expect.stringContaining("**Reminder:**"), undefined],
+            },
+        ]);
+        expect(kv.data.has("reminder:2")).toBe(true);
     });
 
     it("sends no reminder before the first thread exists", async () => {

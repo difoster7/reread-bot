@@ -12,6 +12,9 @@ workers_dev = true # needed only for the optional admin route
 [env.mistborn.triggers]
 crons = ["0 * * * *"]
 
+[env.mistborn.observability]
+enabled = true # Workers Logs: persisted, searchable logs in the dashboard
+
 [[env.mistborn.kv_namespaces]]
 binding = "STATE"
 id = "REPLACE_WITH_KV_NAMESPACE_ID"

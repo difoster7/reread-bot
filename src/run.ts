@@ -121,9 +121,9 @@ async function threadStep(
 }
 
 /**
- * Posts a session guarded by a pending marker. HTTP errors mean nothing was
- * created, so the marker is released for a retry next hour. Ambiguous
- * failures leave it pending: a missed post beats a duplicate.
+ * Posts a session guarded by a pending marker. 4xx errors mean nothing was
+ * created, so the marker is released for a retry next hour. 5xx and network
+ * failures are ambiguous and leave it pending: a missed post beats a duplicate.
  */
 async function postSession(
     cfg: Config,
@@ -149,7 +149,7 @@ async function postSession(
             cfg.roleId,
         );
     } catch (err) {
-        if (err instanceof DiscordHttpError) await kv.delete(key);
+        if (definitelyNotCreated(err)) await kv.delete(key);
         throw err;
     }
 
@@ -180,6 +180,10 @@ async function postSession(
 
     await save({ status: "posted", threadId, startedAt, postedAt: new Date().toISOString() });
     return threadId;
+}
+
+function definitelyNotCreated(err: unknown): boolean {
+    return err instanceof DiscordHttpError && err.status < 500;
 }
 
 async function reminderStep(

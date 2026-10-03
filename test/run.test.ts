@@ -108,12 +108,22 @@ describe("thread step", () => {
 
     it("releases the pending marker when Discord rejects the post", async () => {
         const { discord, kv, run } = setup();
-        discord.failures.set("createForumPost", new DiscordHttpError("POST", "/x", 500, {}));
+        discord.failures.set("createForumPost", new DiscordHttpError("POST", "/x", 400, {}));
         await expect(run(DAY1)).rejects.toThrow();
         expect(kv.data.has("session:1")).toBe(false);
         discord.failures.clear();
         await run(DAY1 + HOUR);
         expect(record(kv, "session:1")).toMatchObject({ status: "posted" });
+    });
+
+    it("keeps the pending marker after a Discord server error", async () => {
+        const { discord, kv, run } = setup();
+        discord.failures.set("createForumPost", new DiscordHttpError("POST", "/x", 503, {}));
+        await expect(run(DAY1)).rejects.toThrow();
+        expect(record(kv, "session:1")).toMatchObject({ status: "pending" });
+        discord.failures.clear();
+        await expect(run(DAY1 + HOUR)).rejects.toThrow(/stuck pending/);
+        expect(methods(discord)).toEqual(["createForumPost"]);
     });
 
     it("keeps the pending marker and stops retrying after an ambiguous failure", async () => {

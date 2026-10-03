@@ -32,7 +32,7 @@ interface ErrorBody {
     errors?: unknown;
 }
 
-/** Discord answered with an error status: the action definitely did not happen. */
+/** Discord answered with an error status. 4xx: the action did not happen; 5xx: it may have. */
 export class DiscordHttpError extends Error {
     readonly method: string;
     readonly path: string;

@@ -124,9 +124,16 @@ placeholders fail validation; other braces are left as-is.
 
 ## 7. Local testing
 
+`GUILD_ID` and `CHANNEL_ID` in `[env.mistborn.vars]` must hold real IDs
+(section 3). To try it before setup, pass dummy IDs (safe: dry run never calls
+Discord):
+
 ```sh
 npm run dev -- --env mistborn
+npm run dev -- --env mistborn --var GUILD_ID:100000000000000001 --var CHANNEL_ID:100000000000000002
 ```
+
+The first form needs real IDs; the second works with the placeholders.
 
 This runs locally with `DRY_RUN` forced on and a local KV store — nothing is
 sent to Discord. Trigger the cron:
@@ -140,7 +147,7 @@ curl "http://localhost:8787/cdn-cgi/handler/scheduled?cron=0+*+*+*+*"
 
 To simulate a date, add `&time=<epoch milliseconds>`, e.g.
 `&time=1792339200000` (2026-10-18 09:00 PDT) makes the run behave as if it
-were that moment. Epoch seconds are not accepted as an alternative.
+were that moment.
 
 Watch the dev server log for `[dry-run] would open session …`. With
 `ADMIN_SECRET` in a local `.dev.vars` file, you can also preview:
@@ -192,7 +199,9 @@ namespace, set secrets with `--env <name>`, and deploy with
 
 ## 12. Recovering a stuck session
 
-If a post attempt ended without a clear answer from Discord (a network error, a timeout, or a Discord server error), the session is left `pending` and every hourly run logs
+If a post attempt ended without a clear answer from Discord (a network error,
+a timeout, or a Discord server error), the session is left `pending` and every
+hourly run logs
 `Session N is stuck pending … check Discord, then fix KV key "session:N"`.
 The bot will not retry it (a missed post beats a duplicate). To fix:
 

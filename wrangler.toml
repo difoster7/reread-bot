@@ -17,22 +17,22 @@ enabled = true # Workers Logs: persisted, searchable logs in the dashboard
 
 [[env.mistborn.kv_namespaces]]
 binding = "STATE"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "e278ff155578462f871b9df7b6e29cce"
 
 [env.mistborn.vars]
 PLAN = "mistborn"
-GUILD_ID = "REPLACE_WITH_GUILD_ID"
-CHANNEL_ID = "REPLACE_WITH_CHANNEL_ID"
+GUILD_ID = "1315375824672653364"
+CHANNEL_ID = "1556120402659377203"
 CHANNEL_MODE = "forum"            # "forum" or "text"
 TIMEZONE = "America/Los_Angeles"
 POST_HOUR = "9"                   # local hour, 0-23
 POST_OFFSET_DAYS = "0"            # e.g. "-14" to open at the start of the reading window
-ROLE_ID = ""                      # set to ping a role when a thread opens
+ROLE_ID = "1556120638895296612"     # pinged when a thread opens
 FORUM_TAGS = "{}"                 # e.g. '{"TFE":"123...","WoA":"456..."}'
 LOCK_PREVIOUS = "true"
 REMINDER_DAYS_BEFORE = "3"        # "0" disables reminders
-DRY_RUN = "false"
-TEST_CHANNEL_ID = ""              # admin force-post target
+DRY_RUN = "true"
+TEST_CHANNEL_ID = "1556117678895136899" # admin force-post target (test server)
 SPOILER_POLICY = ""
 # Templates default to DEFAULT_TEMPLATES in src/render.ts. Override any of
 # THREAD_TITLE_TEMPLATE, OPENING_TEMPLATE, NEXT_TEMPLATE, FINAL_TEXT,

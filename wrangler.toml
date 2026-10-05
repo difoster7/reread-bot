@@ -31,7 +31,7 @@ ROLE_ID = "1556120638895296612"     # pinged when a thread opens
 FORUM_TAGS = "{}"                 # e.g. '{"TFE":"123...","WoA":"456..."}'
 LOCK_PREVIOUS = "true"
 REMINDER_DAYS_BEFORE = "3"        # "0" disables reminders
-DRY_RUN = "true"
+DRY_RUN = "false"
 TEST_CHANNEL_ID = "1556117678895136899" # admin force-post target (test server)
 SPOILER_POLICY = ""
 # Templates default to DEFAULT_TEMPLATES in src/render.ts. Override any of

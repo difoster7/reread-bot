@@ -93,6 +93,10 @@ function tidy(text: string): string {
     return text.replace(/\n{3,}/g, "\n\n").trim();
 }
 
+function withPing(body: string, roleId?: string): string {
+    return roleId ? `<@&${roleId}>\n${body}` : body;
+}
+
 function truncate(text: string, max: number): string {
     return text.length <= max ? text : `${text.slice(0, max - 1)}…`;
 }
@@ -113,7 +117,7 @@ export function renderPost(
             next: next ? fill(templates.next, nextValues(next)) : templates.finalText,
         }),
     );
-    const content = opts.roleId ? `<@&${opts.roleId}>\n${body}` : body;
+    const content = withPing(body, opts.roleId);
     if (content.length > MAX_CONTENT) {
         throw new RangeError(
             `Opening message for session ${session.n} is ${content.length} characters (max ${MAX_CONTENT})`,
@@ -123,6 +127,6 @@ export function renderPost(
 }
 
 /** Reminder text announcing `next`. */
-export function renderReminder(templates: Templates, next: Session): string {
-    return tidy(fill(templates.reminder, nextValues(next)));
+export function renderReminder(templates: Templates, next: Session, roleId?: string): string {
+    return withPing(tidy(fill(templates.reminder, nextValues(next))), roleId);
 }

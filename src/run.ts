@@ -213,12 +213,12 @@ async function reminderStep(
     const latest = await kv.get<LatestRecord>("latest", "json");
     if (!latest) return;
 
-    const content = renderReminder(cfg.templates, next);
+    const content = renderReminder(cfg.templates, next, cfg.roleId);
     if (cfg.dryRun) {
         console.log(`[dry-run] would remind in thread ${latest.threadId}`, content);
         return;
     }
-    const messageId = await discord.sendMessage(latest.threadId, content);
+    const messageId = await discord.sendMessage(latest.threadId, content, cfg.roleId);
     await kv.put(key, JSON.stringify({ messageId, postedAt: new Date().toISOString() }));
 }
 

@@ -78,6 +78,12 @@ describe("renderReminder", () => {
             "⏰ **Reminder:** next discussion opens Sunday, January 10, 2027 — Book A, Ch 3–4 + Epilogue.",
         );
     });
+
+    it("prefixes the role ping", () => {
+        expect(renderReminder(DEFAULT_TEMPLATES, sessions[1], "123")).toMatch(
+            /^<@&123>\n⏰ \*\*Reminder:\*\*/,
+        );
+    });
 });
 
 describe("templateErrors", () => {

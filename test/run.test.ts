@@ -235,6 +235,20 @@ describe("reminder step", () => {
         expect(kv.data.has("reminder:2")).toBe(true);
     });
 
+    it("pings the role in the reminder", async () => {
+        const { discord, run } = setup({ ROLE_ID: IDS.role });
+        await run(DAY1);
+        await run(REMIND2);
+        expect(discord.calls.at(-1)).toEqual({
+            method: "sendMessage",
+            args: [
+                "thread-1",
+                expect.stringMatching(new RegExp(`^<@&${IDS.role}>\n⏰ \\*\\*Reminder:\\*\\*`)),
+                IDS.role,
+            ],
+        });
+    });
+
     it("sends no reminder before the first thread exists", async () => {
         const { discord, run } = setup();
         await run(Date.parse("2026-12-31T17:00:00Z"));

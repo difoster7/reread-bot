@@ -103,7 +103,7 @@ All vars are strings in `[env.<name>.vars]`. Empty string = unset.
 | `TIMEZONE` | `America/Los_Angeles` | IANA zone for post times |
 | `POST_HOUR` | `9` | local hour (0–23) |
 | `POST_OFFSET_DAYS` | `0` | post this many days relative to the session date (`-14` = start of reading window) |
-| `ROLE_ID` | — | role to ping when a thread opens |
+| `ROLE_ID` | — | role to ping when a thread opens and in the reminder |
 | `FORUM_TAGS` | `{}` | JSON map of book code → forum tag ID |
 | `LOCK_PREVIOUS` | `true` | archive + lock the previous thread |
 | `REMINDER_DAYS_BEFORE` | `3` | reminder in the current thread N days before the next opens; `0` = off; must be < the plan interval |

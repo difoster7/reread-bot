@@ -96,7 +96,7 @@ async function preview(
         title: post.title,
         content: post.content,
         reminder:
-            next && cfg.reminderDaysBefore > 0 ? renderReminder(cfg.templates, next) : null,
+            next && cfg.reminderDaysBefore > 0 ? renderReminder(cfg.templates, next, cfg.roleId) : null,
         record: await kv.get(`session:${session.n}`, "json"),
     });
 }
